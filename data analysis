@@ -1,0 +1,61 @@
+import pandas as pd
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+%matplotlib inline
+import seaborn as sns
+import missingno as msno
+train = pd.read_csv('../input/stores-area-and-sales-data/Stores.csv')
+train.drop(train.columns[[0]], axis = 1, inplace = True)
+train.describe()
+msno.bar(train, figsize = (16,5),color = "orange")
+plt.show()
+for column_name in train.columns:
+    unique_values = len(train[column_name].unique())
+    print("Feature '{column_name}' has '{unique_values}' unique values".format(column_name = column_name,
+                                                                                         unique_values=unique_values))
+                                                                                         for column_name in train.columns:
+  plt.figure(figsize=(7, 7))
+  plt.title("{column_name} Distribution".format(column_name = column_name))
+  sns.histplot(train[column_name], stat='density',color='green')
+  sns.kdeplot(train[column_name], color='black')
+  plt.axvline(train[column_name].mean(), color='red', linestyle='--', linewidth=0.8)
+  min_ylim, max_ylim = plt.ylim()
+  plt.text(train[column_name].mean()*1.05, max_ylim*0.96, 'Mean (μ): {:.2f}'.format(train[column_name].mean()))
+  plt.xlabel("Score")
+  plt.ylabel("Density")
+  plt.show()
+  sns.set()
+sns.pairplot(train,height = 5 ,kind ='reg',diag_kind='kde')
+plt.show()
+i=1
+plt.figure(figsize=(15,25))
+for feature in train.columns:
+    plt.subplot(6,3,i)
+    sns.boxplot(y=train[feature],color='green')
+    i+=1
+    correlation = train.corr()
+print(correlation['Store_Sales'].sort_values(ascending = False),'\n')
+k= 10
+cols = correlation.nlargest(k,'Store_Sales')['Store_Sales'].index
+print(cols)
+cm = np.corrcoef(train[cols].values.T)
+f , ax = plt.subplots(figsize = (14,12))
+sns.heatmap(cm, vmax=.8, linewidths=0.01,square=True,annot=True,cmap='viridis',
+            linecolor="white",xticklabels = cols.values ,annot_kws = {'size':12},yticklabels = cols.values)
+plt.show()
+train=train.drop('Store_Area',axis=1)
+from sklearn.cluster import KMeans
+wcss = []
+for i in range(1,11):
+    km = KMeans(n_clusters=i)
+    km.fit_predict(train)
+    wcss.append(km.inertia_)
+fig, ax = plt.subplots()
+
+ax.plot(range(1,11),wcss)
+
+ax.set_xlabel('Number of clusters')
+ax.set_ylabel('Data uncertainty')
+
+plt.show()
